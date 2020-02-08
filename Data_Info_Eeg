@@ -1,0 +1,38 @@
+<Info | 16 non-empty fields
+    bads : list | 0 items
+    ch_names : list | Fp1, Fz, F3, F7, FT9, FC5, FC1, C3, T7, ...
+    chs : list | 31 items (EEG: 31)
+    comps : list | 0 items
+    custom_ref_applied : bool | False
+    dev_head_t : Transform | 3 items
+    events : list | 0 items
+    highpass : float | 0.0 Hz
+    hpi_meas : list | 0 items
+    hpi_results : list | 0 items
+    lowpass : float | 140.0 Hz
+    meas_date : tuple | 2019-02-21 13:43:42 GMT
+    nchan : int | 31
+    proc_history : list | 0 items
+    projs : list | 0 items
+    sfreq : float | 500.0 Hz
+    acq_pars : NoneType
+    acq_stim : NoneType
+    ctf_head_t : NoneType
+    description : NoneType
+    dev_ctf_t : NoneType
+    device_info : NoneType
+    dig : NoneType
+    experimenter : NoneType
+    file_id : NoneType
+    gantry_angle : NoneType
+    helium_info : NoneType
+    hpi_subsystem : NoneType
+    kit_system_id : NoneType
+    line_freq : NoneType
+    meas_id : NoneType
+    proj_id : NoneType
+    proj_name : NoneType
+    subject_info : NoneType
+    utc_offset : NoneType
+    xplotter_layout : NoneType
+>
