@@ -75,15 +75,18 @@ def Get_spot_start_samples(start_end, freq, spot_secs):
 	return spot_samples
 
 #POTENCIA BANDAS
-def get_potencias(num_ventanas,f_eeg,m,L,fs):
+def get_potencias(ch,f_eeg,fs):
+    v=1 #tamaño de la ventana (s)
+    L=int(v*fs) #tamaño de la ventana (muestras)
+    m=int(0.5*fs) #avance de 0.5s en muestras --> solape de 0.5 segundos
+    num_ventanas=int((len(f_eeg.get_data()[ch])-L)/m)
+    
     pot_bandas_alpha = []
-    pot_bandas_beta = []
-    pot_bandas_gamma = []
     pot_ventanas = []
+    
     for i in range(num_ventanas+1):
-        f,Px=signal.periodogram(f_eeg[m*i:L+m*i], fs)
+        f, Px = signal.periodogram(f_eeg.get_data()[ch], fs) 
         pot_ventanas.append(sum(Px))
-
         #BANDA ALPHA
         idx_alpha = []
         for i in f:
@@ -93,28 +96,17 @@ def get_potencias(num_ventanas,f_eeg,m,L,fs):
                 idx_alpha.append(False)
         alpha = sum(Px[idx_alpha])
         pot_bandas_alpha.append(alpha)
+        
+    return [pot_bandas_alpha, pot_ventanas]
 
-        #BANDA BETA
-        idx_beta = []
-        for i in f:
-            if i>=14 and i<30:
-                idx_beta.append(True)
-            else:
-                idx_beta.append(False)
-        beta = sum(Px[idx_beta])
-        pot_bandas_beta.append(beta)
-        
-        #BANDA BETA
-        idx_gamma = []
-        for i in f:
-            if i>=30:
-                idx_gamma.append(True)
-            else:
-                idx_gamma.append(False)
-        gamma = sum(Px[idx_gamma])
-        pot_bandas_gamma.append(gamma)
-        
-    return pot_bandas_alpha,pot_bandas_beta, pot_bandas_gamma, pot_ventanas
+def check_index_between(f,f1,f2):
+    idx = []
+    for i in f:
+        if i>f1 and i<=f2:
+            idx.append(True)
+        else:
+            idx.append(False)
+    return idx
 
 #RATIOS POR BANDAS DE FRECUENCIAS
 def ratios(Pot):
