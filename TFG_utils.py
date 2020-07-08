@@ -75,29 +75,18 @@ def Get_spot_start_samples(start_end, freq, spot_secs):
 	return spot_samples
 
 #POTENCIA BANDAS
-def get_potencias(ch,f_eeg,fs):
-    v=1 #tamaño de la ventana (s)
-    L=int(v*fs) #tamaño de la ventana (muestras)
-    m=int(0.5*fs) #avance de 0.5s en muestras --> solape de 0.5 segundos
-    num_ventanas=int((len(f_eeg.get_data()[ch])-L)/m)
-    
-    pot_bandas_alpha = []
-    pot_ventanas = []
-    
-    for i in range(num_ventanas+1):
-        f, Px = signal.periodogram(f_eeg.get_data()[ch], fs) 
-        pot_ventanas.append(sum(Px))
-        #BANDA ALPHA
-        idx_alpha = []
-        for i in f:
-            if i>=8 and i<14:
-                idx_alpha.append(True)
-            else:
-                idx_alpha.append(False)
-        alpha = sum(Px[idx_alpha])
-        pot_bandas_alpha.append(alpha)
-        
-    return [pot_bandas_alpha, pot_ventanas]
+def get_potencias(ch,f_eeg,fs):   
+    f, Px = signal.periodogram(f_eeg.get_data()[ch], fs) 
+    pot_total=sum(Px)
+    pot_banda_alpha = []
+    idx_alpha = []
+    for i in f:
+        if i>=8 and i<14:
+            idx_alpha.append(True)
+        else:
+            idx_alpha.append(False)
+    pot_banda_alpha.append(sum(Px[idx_alpha]))
+    return [pot_banda_alpha, pot_total]
 
 def check_index_between(f,f1,f2):
     idx = []
@@ -129,7 +118,7 @@ def plot_eeg_time(sig1,sig2,i,vmrk_files):
     labels=['Basal activity','spot 1','spot 2','spot 3','spot 4', 'spot 5','spot 6']
 
     channel_names=sig1.ch_names
-    #channel_names=[1,2,3,4,5]
+    #channel_names=[1]
         
     fig, axs = plt.subplots(2,sharex=True,figsize=(15,7))
     for j in range(2):
@@ -159,6 +148,27 @@ def plot_eeg_time(sig1,sig2,i,vmrk_files):
     plt.tick_params(labelcolor="none", bottom=False, left=False)
     plt.xlabel("Time [sec]")
     plt.ylabel("EEG [µV]")
+    plt.show()
+    
+def plot_eeg_channel_corrected(ch,sig1,sig2):
+    y1,x1=sig1[:]
+    y2,x2=sig2[:]
+
+    mysignals = [{'name': 'Raw signal', 'x': x1,
+                 'y': y1[ch], 'color':'b', 'alpha':1, 'linewidth':0.3},
+                {'name': 'Filtered signal', 'x': x2,
+                 'y': y2[ch], 'color':'y', 'alpha':0.8, 'linewidth':1}]
+
+    fig, ax = plt.subplots(figsize=(15,7))
+    for signal in mysignals:
+        ax.plot(signal['x'], signal['y'], 
+                color=signal['color'], alpha=signal['alpha'],
+                linewidth=signal['linewidth'],
+                label=signal['name'])
+
+    # Enable legend
+    ax.legend()
+    ax.set_title("One channel correction")
     plt.show()
 
 def plot_PSD(raw,raw_filtered,filter_applied):
