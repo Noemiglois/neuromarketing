@@ -4,22 +4,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mne.preprocessing import ICA
 import time
+import mne
 
-def returnFolders(folder_name):
+def returnFiles(folder_name):
     EEG_folders = []
     for folder in os.listdir(folder_name):
         EEG_folders.append(os.path.join(folder_name,folder))
-    return EEG_folders
-
-def returnFiles(folders):
     EEG_files = []
-    for folder in folders:
+    for folder in EEG_folders:
         folder_files = []
         for file in os.listdir(folder):
             folder_files.append(os.path.join(folder,file))  
         EEG_files.append(folder_files)
     return EEG_files
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def take_vmrk_files(files):
     vmrk_files=[]
     for i in range(len(files)):
@@ -44,8 +43,9 @@ def take_eeg_files(files):
                 eeg_files.append(file)
     return eeg_files
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Se busca el inicio de los anuncios en el registro de EEG
-def Get_Start_End(File):
+def Get_Start_End_mrk(File):
 	Info_File = open(File, 'r')
 	Info = Info_File.read()
 
@@ -73,6 +73,105 @@ def Get_spot_start_samples(start_end, freq, spot_secs):
 		sample = int(i)*int(freq) + int(start_end[0])
 		spot_samples.append(sample)
 	return spot_samples
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%% PLOT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+def plot_spots(vmrk_filename,sig,ch):
+    fs= sig.info['sfreq']
+    y,x= sig[:]
+    
+    spots_times_sec = [0, 60, 120, 180, 226, 287, 347] # Time at which each spot begins (in sec)
+    start_end = Get_Start_End_mrk(vmrk_filename) # Start and end of spots markers
+    spot_samples = Get_spot_start_samples(start_end,fs, spots_times_sec) # Start from each spot in the recording
+    
+    labels=['Basal activity','Spot 1','Spot 2','Spot 3','Spot 4', 'Spot 5','Spot 6']
+    ini= int(60)*int(fs) # samples of 1st min of basal activity
+
+    plt.figure(figsize=(12,7))
+    it=0
+    axx=x[spot_samples[it]-ini:spot_samples[it]]
+    axy=y[ch][spot_samples[it]-ini:spot_samples[it]]
+    plt.plot(axx, axy, linewidth=1, label=labels[it])
+
+    while it<(len(spot_samples)-1):
+        axx=x[spot_samples[it]:spot_samples[it+1]]
+        axy=y[ch][spot_samples[it]:spot_samples[it+1]]
+        plt.plot(axx, axy, linewidth=1, label=labels[it+1])
+        it+=1
+
+    plt.title("EEG time signal",fontsize=16)
+    plt.xlabel('Time [sec]')
+    plt.ylabel('EEG [µV]')
+    plt.legend(loc='best')
+    plt.show()
+
+def plot_freq_response(b,a,fs,xlim=150):
+    freq, h = signal.freqz(b=b, a=a, fs=fs)
+    fig, ax = plt.subplots(2, 1, figsize=(12, 7))
+    fig.suptitle('Frequency Response (FOI)', fontsize=16)
+    
+    ax[0].set_title("Bode magnitude plot")
+    ax[0].plot(freq, 20*np.log10(abs(h)), color='blue')
+    ax[0].set_ylabel("Amplitude (dB)", color='blue')
+    ax[0].set_xlim([0, xlim])
+    ax[0].grid()
+    
+    ax[1].set_title("Bode phase plot")
+    ax[1].plot(freq, np.unwrap(np.angle(h))*180/np.pi, color='green')
+    ax[1].set_ylabel("Phase (degrees)", color='green')
+    ax[1].set_xlabel("Frequency (Hz)")
+    ax[1].set_xlim([0, xlim])
+    ax[1].grid()
+    
+    plt.show()
+
+def plot_PSD(raw,raw_filtered,filter_applied):
+    plt.figure(figsize=(12,5))
+    ax = plt.axes()
+    raw.plot_psd(fmax=150,ax=ax, color='tab:blue',area_mode='std', dB=True, show=False, average=True, 
+                 estimate='power', line_alpha=None)
+    raw_filtered.plot_psd(fmax=150,ax=ax, color= 'tab:orange', area_mode='std', dB=True, show=False, average=True, 
+                          estimate='power', line_alpha=None)    
+    ax.set_xlim([0, 2])
+    ax.set_title('Power Spectral Density (PSD)', fontsize=16)
+    leg_lines = [line for line in ax.lines if line.get_linestyle() == '-']
+    plt.legend(leg_lines, ['Raw signal',filter_applied])    
+
+def plot_residual_PSD(sig1,sig2):
+    plt.figure(figsize=(12,5))
+    ax = plt.axes()
+    d1,t1=sig1[:]
+    d2,t2=sig2[:]
+    info=sig1.info
+    signal=mne.io.RawArray(d1-d2,info,verbose=False)
+    signal.plot_psd(fmax=150, area_mode='std', ax=ax, dB=True, show=False, average=True, estimate='power', line_alpha=None)
+    ax.set_xlim([0, 2])
+    #ax.set_ylim([-50, 100])
+    ax.set_title('Residual PSD', fontsize=16)
+    plt.show()
+    
+def plot_eeg_channel_corrected(ch,sig1,sig2, filter_applied):
+    y1,x1=sig1[:]
+    y2,x2=sig2[:]
+
+    mysignals = [{'name': 'Raw signal', 'x': x1,
+                 'y': y1[ch], 'color':'tab:blue', 'alpha':0.7, 'linewidth':0.3},
+                {'name': filter_applied, 'x': x2,
+                 'y': y2[ch], 'color':'tab:orange','alpha':0.7, 'linewidth':1}]
+
+    fig, ax = plt.subplots(figsize=(12,5))
+    for signal in mysignals:
+        ax.plot(signal['x'], signal['y'], 
+                color=signal['color'], alpha=signal['alpha'],
+                linewidth=signal['linewidth'],
+                label=signal['name'])
+
+    # Enable legend
+    ax.legend()
+    ax.set_ylabel('EEG [µV]')
+    ax.set_xlabel('Time [sec]')
+    ax.set_title("EEG time signal (Channel %s"%sig1.info['ch_names'][ch]+str(')'),fontsize=16)
+    plt.show()
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #POTENCIA BANDAS
 def get_potencias(ch,f_eeg,fs):   
@@ -124,7 +223,7 @@ def plot_eeg_time(sig1,sig2,i,vmrk_files):
     for j in range(2):
         info=signals[j].info
         sampling_freq = int(info['sfreq'])
-        start_end = Get_Start_End(vmrk_files[i])
+        start_end = Get_Start_End_mrk(vmrk_files[i])
         spot_start_samples = Get_spot_start_samples(start_end, sampling_freq, spots_times_sec)
         ini= int(60)*int(sampling_freq) # samples of 1st min of basal activity
     
@@ -148,55 +247,4 @@ def plot_eeg_time(sig1,sig2,i,vmrk_files):
     plt.tick_params(labelcolor="none", bottom=False, left=False)
     plt.xlabel("Time [sec]")
     plt.ylabel("EEG [µV]")
-    plt.show()
-    
-def plot_eeg_channel_corrected(ch,sig1,sig2):
-    y1,x1=sig1[:]
-    y2,x2=sig2[:]
-
-    mysignals = [{'name': 'Raw signal', 'x': x1,
-                 'y': y1[ch], 'color':'b', 'alpha':1, 'linewidth':0.3},
-                {'name': 'Filtered signal', 'x': x2,
-                 'y': y2[ch], 'color':'y', 'alpha':0.8, 'linewidth':1}]
-
-    fig, ax = plt.subplots(figsize=(15,7))
-    for signal in mysignals:
-        ax.plot(signal['x'], signal['y'], 
-                color=signal['color'], alpha=signal['alpha'],
-                linewidth=signal['linewidth'],
-                label=signal['name'])
-
-    # Enable legend
-    ax.legend()
-    ax.set_title("One channel correction")
-    plt.show()
-
-def plot_PSD(raw,raw_filtered,filter_applied):
-    plt.figure(figsize=(10,7))
-    ax = plt.axes()
-    raw.plot_psd(fmax=160,proj=True, ax=ax, color='tab:orange', show=False, average=True,estimate='power')
-    raw_filtered.plot_psd(fmax=160,proj=True, ax=ax, color= 'tab:blue', show=False, average=True)
-    ax.set_title('Power Spectral Density (PSD)',fontweight='bold')
-    leg_lines = [line for line in ax.lines if line.get_linestyle() == '-']
-    plt.legend(leg_lines, ['Raw EEG signal',filter_applied])
-    
-def plot_freq_response(b,a,fs):
-    # FREQUENCY RESPONSE
-    freq, h = signal.freqz(b, a, fs=fs)
-    fig, ax = plt.subplots(2, 1, figsize=(10, 7))
-
-    ax[0].plot(freq, 20*np.log10(abs(h)), color='blue')
-    ax[0].set_title("Frequency Response")
-    ax[0].set_ylabel("Amplitude (dB)", color='blue')
-    #ax[0].set_xlim([0, 100])
-    #ax[0].set_ylim([-50, 1])
-    ax[0].grid()
-
-    ax[1].plot(freq, np.unwrap(np.angle(h))*180/np.pi, color='green')
-    ax[1].set_ylabel("Phase (degrees)", color='green')
-    ax[1].set_xlabel("Frequency (Hz)")
-    #ax[1].set_xlim([0, 100])
-    #ax[1].set_xlim([-50, 1])
-    ax[1].grid()
-
     plt.show()
