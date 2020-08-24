@@ -185,7 +185,8 @@ def get_potencias(ch,f_eeg,fs):
         else:
             idx_alpha.append(False)
     pot_banda_alpha.append(sum(Px[idx_alpha]))
-    return [pot_banda_alpha, pot_total]
+    ratio=pot_banda_alpha/pot_total
+    return [pot_banda_alpha[0], pot_total, float(ratio)]
 
 def check_index_between(f,f1,f2):
     idx = []
@@ -248,3 +249,13 @@ def plot_eeg_time(sig1,sig2,i,vmrk_files):
     plt.xlabel("Time [sec]")
     plt.ylabel("EEG [µV]")
     plt.show()
+    
+##################### Filtering
+
+def filtering_track(track):
+    f1,f2=(1,40)
+    track_filtered= track.copy().set_montage("standard_1020",verbose= False)
+    track_filtered.filter(l_freq=f1, h_freq=f2, filter_length='auto', method='fir',fir_window='hamming', 
+                          fir_design='firwin', verbose= False)
+    track_filtered.notch_filter([50,100,150], filter_length='auto', method='fir', fir_window='hamming', fir_design='firwin', verbose=None)
+    return track_filtered
