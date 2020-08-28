@@ -98,7 +98,6 @@ def plot_spots(vmrk_filename,sig,ch):
         plt.plot(axx, axy, linewidth=1, label=labels[it+1])
         it+=1
 
-    plt.title("EEG time signal",fontsize=16)
     plt.xlabel('Time [sec]')
     plt.ylabel('EEG [µV]')
     plt.legend(loc='best')
@@ -253,7 +252,7 @@ def plot_eeg_time(sig1,sig2,i,vmrk_files):
 ##################### Filtering
 
 def filtering_track(track):
-    f1,f2=(1,40)
+    f1,f2=(2,40)
     track_filtered= track.copy().set_montage("standard_1020",verbose= False)
     track_filtered.filter(l_freq=f1, h_freq=f2, filter_length='auto', method='fir',fir_window='hamming', 
                           fir_design='firwin', verbose= False)
