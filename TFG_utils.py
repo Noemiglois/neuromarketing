@@ -173,9 +173,8 @@ def plot_eeg_channel_corrected(ch,sig1,sig2, filter_applied):
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #POTENCIA BANDAS
-def get_potencias(ch,f_eeg,fs):   
+def get_alpha_pow(ch,f_eeg,fs):   
     f, Px = signal.periodogram(f_eeg.get_data()[ch], fs) 
-    pot_total=sum(Px)
     pot_banda_alpha = []
     idx_alpha = []
     for i in f:
@@ -184,8 +183,7 @@ def get_potencias(ch,f_eeg,fs):
         else:
             idx_alpha.append(False)
     pot_banda_alpha.append(sum(Px[idx_alpha]))
-    ratio=pot_banda_alpha/pot_total
-    return [pot_banda_alpha[0], pot_total, float(ratio)]
+    return pot_banda_alpha[0]
 
 def check_index_between(f,f1,f2):
     idx = []
