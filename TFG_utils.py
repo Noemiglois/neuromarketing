@@ -182,7 +182,7 @@ def get_alpha_pow(ch,f_eeg,fs):
             idx_alpha.append(True)
         else:
             idx_alpha.append(False)
-    pot_banda_alpha.append(sum(Px[idx_alpha]))
+    pot_banda_alpha.append(sum(Px[idx_alpha]*f[1]))
     return pot_banda_alpha[0]
 
 def check_index_between(f,f1,f2):
