@@ -1,5 +1,7 @@
 # TFG: FILTRADO AVANZADO DE LA SEÑAL DE EEG APLICADO EN NEUROMARKETING
 
+**Universidad Rey Juan Carlos. Grado de Ingeniería Biomédica 2019/2020**
+
 ### AUTORA
 
 Noemi González Lois
