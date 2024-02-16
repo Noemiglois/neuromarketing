@@ -36,3 +36,8 @@ The project's final phase focuses on deriving the neurometric approach-withdrawa
 ## Notes
 The project's code is developed in Python using Jupyter Notebook and Spyder environments, with the MNE module extensively used for neurophysiological data analysis.
 
+
+## ¡Let's connect! 
+[![](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/noemigonzalezlois)
+
+October 2020
